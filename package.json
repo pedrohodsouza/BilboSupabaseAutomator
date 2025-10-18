@@ -1,0 +1,47 @@
+{
+  "name": "bilbo-supabase-automator",
+  "version": "1.0.0",
+  "description": "Bilbo is a visual Node.js tool that automates migrating Supabase Edge Functions between projects. Built with Express and Socket.io, it lets you download, transfer, and deploy functions in real time through a clean web interface.",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "build": "npm install --omit=dev",
+    "test": "echo \"No test specified\" && exit 0"
+  },
+  "keywords": [
+    "bilbo",
+    "supabase",
+    "edge-functions",
+    "automation",
+    "migration",
+    "developer-tools",
+    "nodejs",
+    "express",
+    "socket.io",
+    "cli",
+    "open-source"
+  ],
+  "author": "Pedro de Souza <https://github.com/pedrohodsouza>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pedrohodsouza/BilboSupabaseAutomator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pedrohodsouza/BilboSupabaseAutomator/issues"
+  },
+  "homepage": "https://github.com/pedrohodsouza/BilboSupabaseAutomator#readme",
+  "dependencies": {
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

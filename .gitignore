@@ -1,0 +1,17 @@
+# Node.js
+node_modules/
+npm-debug.log
+.env
+.DS_Store
+
+# System
+dist/
+tmp/
+bilbo_temp.ps1
+
+# IDEs
+.vscode/
+.idea/
+
+# Logs
+*.log
