@@ -2,6 +2,21 @@ const socket = io();
 const form = document.getElementById("migrateForm");
 const logs = document.getElementById("logs");
 
+fetch("/user-info")
+  .then((r) => r.json())
+  .then(({ orgs, error }) => {
+    const el = document.getElementById("accountOrgs");
+    if (error === "not-installed") {
+      el.textContent = "Supabase CLI not installed";
+      el.style.color = "#ffcc66";
+    } else {
+      el.textContent = orgs.length ? orgs.join(", ") : "—";
+    }
+  })
+  .catch(() => {
+    document.getElementById("accountOrgs").textContent = "—";
+  });
+
 function addLog(message, type = "") {
   const line = document.createElement("div");
   line.classList.add("terminal-line");

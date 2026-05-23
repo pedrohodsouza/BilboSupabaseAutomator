@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -ExecutionPolicy Bypass -Command \"supabase projects list 2>&1\")",
+      "Bash(echo \"Exit: $?\")",
+      "PowerShell(Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue })",
+      "Bash(node -e \"import\\('node-pty'\\).then\\(pty => { const t = pty.default.spawn\\('powershell', ['-Command', 'supabase --version 2>&1'], {name:'xterm',cols:80,rows:24,env:process.env}\\); t.onData\\(d => console.log\\('DATA:', d\\)\\); t.onExit\\(e => console.log\\('EXIT:', e\\)\\); }\\)\")",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(gh api *)",
+      "WebFetch(domain:github.com)"
+    ]
+  }
+}

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bilbo - Login</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="logo-section">
+      <img src="/BilboLogo.png" alt="Bilbo logo" class="logo" />
+      <h1>Bilbo</h1>
+      <p class="subtitle">Supabase Edge Function Automator</p>
+    </div>
+
+    <main>
+      <!-- Not installed state -->
+      <div id="installSection" style="display:none">
+        <p class="login-desc">The Supabase CLI is required to use Bilbo.</p>
+        <button id="installBtn" type="button">Install Supabase CLI</button>
+        <div class="manual-cmds">
+          <p class="manual-label">Or run one of these in your terminal:</p>
+          <div class="cmd-line" title="Click to copy">scoop install supabase</div>
+          <div class="cmd-line" title="Click to copy">winget install Supabase.CLI</div>
+          <div class="cmd-line" title="Click to copy">choco install supabase</div>
+        </div>
+      </div>
+
+      <!-- Login state -->
+      <div id="loginSection" style="display:none">
+        <p class="login-desc">You are not logged in to the Supabase CLI.</p>
+        <button id="loginBtn" type="button">Connect to Supabase</button>
+      </div>
+
+      <!-- Code input — shown after browser opens -->
+      <div id="codeSection" style="display:none">
+        <p class="login-desc">Enter the verification code shown in the browser:</p>
+        <input type="text" id="codeInput" placeholder="Enter code here" autocomplete="off" />
+        <button id="codeBtn" type="button">Confirm</button>
+      </div>
+
+      <div id="loginStatus"></div>
+    </main>
+  </div>
+
+  <footer>
+    <br>
+    <img width="20" height="20" src="https://img.icons8.com/color/48/supabase.png" alt="supabase"/>
+    <span>For Supabase by <a href="https://github.com/pedrohodsouza" target="_blank" rel="noopener noreferrer">Pedro de Souza</a></span>
+    <br>
+    <br>
+  </footer>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/login.js"></script>
+</body>
+</html>

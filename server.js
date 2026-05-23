@@ -1,7 +1,8 @@
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
-import { exec } from "child_process";
+import { exec, spawn } from "child_process";
+import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 
@@ -13,13 +14,176 @@ app.set("view engine", "ejs");
 app.set("views", "./views");
 app.use(express.static("public"));
 
-// Main page
-app.get("/", (req, res) => {
+// Returns: "logged-in" | "not-logged-in" | "not-installed"
+function checkSupabaseAuth() {
+  return new Promise((resolve) => {
+    exec(
+      'powershell -ExecutionPolicy Bypass -Command "supabase projects list 2>&1"',
+      { timeout: 10000 },
+      (err, stdout, stderr) => {
+        if (err && err.killed) return resolve("not-installed");
+        const out = (stdout + stderr).toLowerCase();
+        if (out.includes("não é reconhecido") || out.includes("not recognized") || out.includes("commandnotfoundexception")) {
+          return resolve("not-installed");
+        }
+        // If the command exited with a non-zero code, the user is not authenticated
+        if (err) return resolve("not-logged-in");
+        resolve("logged-in");
+      }
+    );
+  });
+}
+
+app.get("/login", (req, res) => {
+  res.render("login");
+});
+
+app.get("/check-auth", async (req, res) => {
+  const status = await checkSupabaseAuth();
+  res.json({ loggedIn: status === "logged-in", status });
+});
+
+app.get("/", async (req, res) => {
+  const status = await checkSupabaseAuth();
+  if (status !== "logged-in") return res.redirect("/login");
   res.render("index");
 });
 
+app.get("/user-info", (req, res) => {
+  exec(
+    'powershell -ExecutionPolicy Bypass -Command "supabase orgs list --output json 2>&1"',
+    { timeout: 10000 },
+    (err, stdout, stderr) => {
+      const raw = (stdout + stderr).toLowerCase();
+      if (raw.includes("não é reconhecido") || raw.includes("not recognized") || raw.includes("commandnotfoundexception")) {
+        return res.json({ orgs: [], error: "not-installed" });
+      }
+      try {
+        const orgs = JSON.parse(stdout.trim());
+        res.json({ orgs: orgs.map((o) => o.name) });
+      } catch {
+        res.json({ orgs: [], error: "parse-error" });
+      }
+    }
+  );
+});
+
+app.post("/logout", (req, res) => {
+  exec(
+    'powershell -ExecutionPolicy Bypass -Command "echo y | supabase logout"',
+    { timeout: 10000 },
+    () => res.redirect("/login")
+  );
+});
+
+const pendingLogins = new Map(); // socketId → { ecdh, sessionId }
+
 io.on("connection", (socket) => {
   console.log("New client connected");
+
+  socket.on("installCLI", () => {
+    const psScript = `
+$ErrorActionPreference = 'Continue'
+if (Get-Command scoop -ErrorAction SilentlyContinue) {
+    Write-Host "Package manager detected: Scoop"
+    Write-Host "Adding Supabase bucket..."
+    scoop bucket add supabase https://github.com/supabase/scoop-bucket.git 2>&1
+    Write-Host "Installing Supabase CLI..."
+    scoop install supabase 2>&1
+} elseif (Get-Command winget -ErrorAction SilentlyContinue) {
+    Write-Host "Package manager detected: winget"
+    winget install Supabase.CLI 2>&1
+} elseif (Get-Command choco -ErrorAction SilentlyContinue) {
+    Write-Host "Package manager detected: Chocolatey"
+    choco install supabase -y 2>&1
+} else {
+    Write-Host "No supported package manager found. Please install manually."
+    exit 1
+}
+Write-Host "Done!"
+`;
+    const child = spawn("powershell", ["-ExecutionPolicy", "Bypass", "-Command", psScript]);
+    child.stdout.on("data", (data) => socket.emit("installLog", data.toString()));
+    child.stderr.on("data", (data) => socket.emit("installLog", data.toString()));
+    child.on("close", (code) => socket.emit("installDone", { success: code === 0 }));
+  });
+
+  socket.on("triggerLogin", () => {
+    const ecdh = crypto.createECDH("prime256v1");
+    ecdh.generateKeys();
+    const publicKeyHex = ecdh.getPublicKey("hex");
+    const sessionId = crypto.randomUUID();
+    const tokenName = `bilbo_${Date.now()}`;
+
+    const loginUrl =
+      `https://supabase.com/dashboard/cli/login` +
+      `?session_id=${sessionId}` +
+      `&token_name=${encodeURIComponent(tokenName)}` +
+      `&public_key=${publicKeyHex}`;
+
+    exec(`powershell -ExecutionPolicy Bypass -Command "Start-Process '${loginUrl}'"`);
+    pendingLogins.set(socket.id, { ecdh, sessionId });
+
+    socket.emit("loginLog", "Browser opened — log in to Supabase.");
+    socket.emit("awaitingCode");
+  });
+
+  socket.on("submitDeviceCode", ({ code }) => {
+    const pending = pendingLogins.get(socket.id);
+    if (!pending) return;
+    const { ecdh, sessionId } = pending;
+    pendingLogins.delete(socket.id);
+
+    socket.emit("loginLog", "Verifying code...");
+
+    let attempts = 0;
+    const poll = setInterval(async () => {
+      if (++attempts > 150) {
+        clearInterval(poll);
+        socket.emit("loginLog", "Timed out after 5 minutes. Please try again.");
+        return;
+      }
+      try {
+        const res = await fetch(
+          `https://api.supabase.com/platform/cli/login/${sessionId}?device_code=${encodeURIComponent(code)}`
+        );
+        const text = await res.text();
+        if (!res.ok) {
+          socket.emit("loginLog", `API ${res.status}: ${text.slice(0, 200)}`);
+          return;
+        }
+        const data = JSON.parse(text);
+        socket.emit("loginLog", `Response keys: ${Object.keys(data).join(", ")}`);
+
+        const encryptedHex = data.token || data.access_token || data.AccessToken;
+        const serverPubKeyHex = data.public_key || data.PublicKey;
+        const nonceHex = data.nonce || data.Nonce;
+        if (!encryptedHex || !serverPubKeyHex || !nonceHex) {
+          socket.emit("loginLog", `Waiting for token fields... got: ${JSON.stringify(data).slice(0, 200)}`);
+          return;
+        }
+
+        clearInterval(poll);
+
+        const sharedSecret = ecdh.computeSecret(Buffer.from(serverPubKeyHex, "hex"));
+        const encrypted = Buffer.from(encryptedHex, "hex");
+        const authTag = encrypted.slice(-16);
+        const ciphertext = encrypted.slice(0, -16);
+        const decipher = crypto.createDecipheriv("aes-256-gcm", sharedSecret, Buffer.from(nonceHex, "hex"));
+        decipher.setAuthTag(authTag);
+        const token = Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString("utf8");
+
+        exec(
+          'powershell -ExecutionPolicy Bypass -Command "supabase login --token $env:BILBO_TOKEN"',
+          { timeout: 10000, env: { ...process.env, BILBO_TOKEN: token } },
+          (err) => {
+            if (!err) socket.emit("loginLog", "Authenticated! Redirecting...");
+            else socket.emit("loginLog", "Error saving token: " + err.message);
+          }
+        );
+      } catch (_) {}
+    }, 2000);
+  });
 
   socket.on("startMigration", ({ source, target }) => {
     console.log(`Starting migration from ${source} → ${target}`);
@@ -99,6 +263,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
+    pendingLogins.delete(socket.id);
     console.log("Client disconnected");
   });
 });

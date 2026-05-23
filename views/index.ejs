@@ -14,6 +14,14 @@
       <p class="subtitle">Supabase Edge Function Automator</p>
     </div>
 
+    <div class="account-bar">
+      <span class="account-status">● Connected</span>
+      <span class="account-orgs" id="accountOrgs">Loading...</span>
+      <form action="/logout" method="post" style="margin:0">
+        <button type="submit" class="logout-btn">Sign out</button>
+      </form>
+    </div>
+
     <main>
       <form id="migrateForm">
         <label for="source">Source Project ID</label>

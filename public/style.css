@@ -200,6 +200,166 @@ header p {
   100% { text-shadow: 0 0 6px rgba(62,207,142,.30); }
 }
 
+.account-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  background: rgba(62, 207, 142, 0.05);
+  border: 1px solid rgba(62, 207, 142, 0.15);
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 0.82rem;
+}
+
+.account-status {
+  color: #3ecf8e;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.account-orgs {
+  color: #b6b6b6;
+  flex: 1;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logout-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 107, 107, 0.4);
+  color: #ff6b6b;
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: auto;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.logout-btn:hover {
+  background: rgba(255, 107, 107, 0.12);
+  border-color: #ff6b6b;
+  transform: none;
+}
+
+.manual-cmds {
+  margin-top: 18px;
+  border-top: 1px solid rgba(62, 207, 142, 0.1);
+  padding-top: 14px;
+}
+
+.manual-label {
+  color: #888;
+  font-size: 0.8rem;
+  margin-bottom: 8px;
+}
+
+.cmd-line {
+  font-family: "Fira Code", monospace;
+  font-size: 0.82rem;
+  color: #3ecf8e;
+  background: rgba(62, 207, 142, 0.05);
+  border: 1px solid rgba(62, 207, 142, 0.15);
+  border-radius: 6px;
+  padding: 7px 10px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  user-select: none;
+}
+
+.cmd-line::before {
+  content: "$ ";
+  opacity: 0.4;
+}
+
+.cmd-line:hover {
+  background: rgba(62, 207, 142, 0.1);
+  border-color: rgba(62, 207, 142, 0.35);
+}
+
+.cmd-line.copied {
+  color: #b8ffce;
+  border-color: #3ecf8e;
+}
+
+.login-desc {
+  color: #b6b6b6;
+  font-size: 0.9rem;
+  text-align: center;
+  margin: 4px 0 16px;
+  opacity: 0.9;
+  line-height: 1.6;
+}
+
+.token-link {
+  display: inline-block;
+  margin-top: 6px;
+  color: #3ecf8e;
+  font-size: 0.82rem;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.token-link:hover {
+  color: #00ffaa;
+}
+
+#tokenInput {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 255, 100, 0.25);
+  background-color: #101010;
+  color: #e9ffe9;
+  font-family: "Fira Code", monospace;
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+  transition: all 0.2s ease;
+}
+
+#tokenInput:focus {
+  outline: none;
+  border-color: #3ecf8e;
+  box-shadow: 0 0 6px rgba(0, 255, 100, 0.3);
+}
+
+#loginStatus {
+  background: rgba(5, 5, 5, 0.95);
+  color: #b8ffce;
+  font-family: "Fira Code", monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 255, 100, 0.15);
+  margin-top: 20px;
+  padding: 12px 14px;
+  max-height: 160px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  box-shadow: inset 0 0 12px rgba(0, 255, 120, 0.1);
+  display: none;
+}
+
+#loginStatus.visible {
+  display: block;
+}
+
+.container button:disabled {
+  background-color: #2a9a6b;
+  cursor: not-allowed;
+  opacity: 0.7;
+  transform: none;
+}
+
 footer a {
   color: #3ecf8e;
   text-decoration: none;
